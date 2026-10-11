@@ -21,6 +21,10 @@ locals {
   s3_origin_id = "s3-${var.name}"
 }
 
+# Logging and WAF are off on purpose to keep the bill at ~$0: WAF is ~$5/month
+# plus per-request fees, and this only serves public static files.
+#trivy:ignore:AWS-0010
+#trivy:ignore:AWS-0011
 resource "aws_cloudfront_distribution" "site" {
   comment             = var.name
   enabled             = true

@@ -93,6 +93,34 @@ repository variables in doozy_web: `AWS_DEPLOY_ROLE_ARN`, `FRONTEND_BUCKET`,
 `FRONTEND_DISTRIBUTION_ID`, and use `aws-actions/configure-aws-credentials`
 with `role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}`.
 
+## CI checks
+
+Every PR runs these (no AWS credentials needed):
+
+| Workflow | What it does |
+|---|---|
+| `terraform-checks.yml` | `terraform fmt -check`, `terraform validate` for each root, TFLint (`.tflint.hcl`), and a Trivy scan for insecure settings and committed secrets. |
+| `infracost.yml` | Comments the change in estimated monthly cost on the PR. Needs the repository secret `INFRACOST_API_KEY` (free: run `infracost auth login`, or sign up at dashboard.infracost.io); skipped if it isn't set. |
+
+Dependabot (`.github/dependabot.yml`) opens weekly PRs for provider and GitHub Action updates.
+
+Running the checks locally:
+
+```sh
+terraform fmt -recursive
+tflint --init && tflint --recursive --config "$PWD/.tflint.hcl"
+trivy fs --scanners misconfig,secret .
+```
+
+**Security-scan exceptions.** Some Trivy findings are deliberate cost trade-offs
+(no WAF, no access logging, SSE-S3 instead of KMS). They're suppressed with a
+`#trivy:ignore:<ID>` comment and a reason directly above the resource. New
+exceptions should follow the same pattern.
+
+**Infracost and usage-based pricing.** CloudFront and S3 are billed by traffic, so
+Infracost shows them as "usage-based" (~$0 by default). Fixed costs, like the
+future ECS service and load balancer, show up as real numbers.
+
 ## Cost notes
 
 - At hobby traffic the front end should cost ~$0 (CloudFront free allowance / flat-rate Free plan,
