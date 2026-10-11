@@ -2,6 +2,8 @@ data "aws_caller_identity" "current" {}
 
 # Private bucket holding the built front end (the contents of `dist/`).
 # It is never public: only the CloudFront distribution can read from it.
+# Access logging is off on purpose: it adds storage/request cost and isn't needed yet.
+#trivy:ignore:AWS-0089
 resource "aws_s3_bucket" "site" {
   bucket = "${var.name}-${data.aws_caller_identity.current.account_id}"
 }
@@ -23,6 +25,9 @@ resource "aws_s3_bucket_ownership_controls" "site" {
   }
 }
 
+# SSE-S3 (AES256) instead of a customer-managed KMS key: KMS costs $1/key/month
+# plus per-request fees, and this data doesn't need customer-controlled keys.
+#trivy:ignore:AWS-0132
 resource "aws_s3_bucket_server_side_encryption_configuration" "site" {
   bucket = aws_s3_bucket.site.id
 

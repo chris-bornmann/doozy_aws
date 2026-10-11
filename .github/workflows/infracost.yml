@@ -1,0 +1,54 @@
+# Posts a PR comment showing how the change affects the monthly AWS bill.
+# Infracost reads the Terraform code only; it needs no AWS credentials.
+#
+# Requires the repository secret INFRACOST_API_KEY (free; get one with
+# `infracost auth login` or at https://dashboard.infracost.io). Without it the
+# job is skipped instead of failing.
+name: Infracost
+
+on:
+  pull_request:
+    # "closed" lets Infracost mark the PR as merged/closed in its dashboard.
+    types: [opened, synchronize, reopened, closed]
+
+permissions:
+  contents: read
+  pull-requests: write # to post the cost comment
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  cost-diff:
+    name: Cost diff
+    runs-on: ubuntu-latest
+    env:
+      # Exposed as an env var so steps can check whether the secret is set.
+      INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
+    steps:
+      - name: Note missing API key
+        if: env.INFRACOST_API_KEY == ''
+        run: echo "::notice::INFRACOST_API_KEY is not set; skipping the cost estimate."
+
+      # Check out the PR and its base branch side by side so they can be compared.
+      # Not needed for closed PRs, where only the dashboard status is updated.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: env.INFRACOST_API_KEY != '' && github.event.action != 'closed'
+        with:
+          path: head
+          persist-credentials: false
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: env.INFRACOST_API_KEY != '' && github.event.action != 'closed'
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          path: base
+          persist-credentials: false
+
+      - uses: infracost/actions/diff@fb736a8f219195d6efdca58682069b16fe1bc280 # v4.2.0
+        if: env.INFRACOST_API_KEY != ''
+        with:
+          api-key: ${{ env.INFRACOST_API_KEY }}
+          base-path: base
+          head-path: head
