@@ -14,3 +14,27 @@ variable "noncurrent_version_retention_days" {
   type        = number
   default     = 30
 }
+
+variable "csp_connect_src" {
+  description = "Extra origins the site may contact with fetch/XHR (Content-Security-Policy connect-src), e.g. the backend API: [\"https://api.example.com\"]. The site's own origin is always allowed."
+  type        = list(string)
+  default     = []
+}
+
+variable "csp_style_src" {
+  description = "Extra origins the site may load stylesheets from (Content-Security-Policy style-src). The site's own origin is always allowed."
+  type        = list(string)
+  default     = []
+}
+
+variable "csp_font_src" {
+  description = "Extra origins the site may load fonts from (Content-Security-Policy font-src). The site's own origin is always allowed."
+  type        = list(string)
+  default     = []
+}
+
+variable "permissions_policy" {
+  description = "Value of the Permissions-Policy header: which powerful browser features the site may use. The default denies all of the common ones."
+  type        = string
+  default     = "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+}

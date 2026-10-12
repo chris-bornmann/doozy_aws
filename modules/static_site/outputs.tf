@@ -22,3 +22,8 @@ output "site_url" {
   description = "Public URL of the site."
   value       = "https://${aws_cloudfront_distribution.site.domain_name}"
 }
+
+output "content_security_policy" {
+  description = "The Content-Security-Policy header the site is served with."
+  value       = aws_cloudfront_response_headers_policy.security.security_headers_config[0].content_security_policy[0].content_security_policy
+}

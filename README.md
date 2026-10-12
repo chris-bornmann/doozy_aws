@@ -121,6 +121,19 @@ exceptions should follow the same pattern.
 Infracost shows them as "usage-based" (~$0 by default). Fixed costs, like the
 future ECS service and load balancer, show up as real numbers.
 
+## Security headers
+
+Every response carries a strict **Content-Security-Policy** plus HSTS, `X-Frame-Options: DENY`,
+`X-Content-Type-Options`, `Referrer-Policy` and a `Permissions-Policy`
+(`modules/static_site/security_headers.tf`). The app keeps its login token in `localStorage`,
+so the CSP is what stops an injected or third-party script from running and stealing it: only
+the site's own scripts run, and the browser may only contact the origins listed.
+
+`envs/prod/main.tf` adds what doozy_web needs beyond its own origin: Google Fonts, the backend
+API (`api_origin`), and the microphone for voice commands. If the front end starts loading
+something from a new origin, add it there, or the browser will block it (look for
+"Content Security Policy" errors in the browser console).
+
 ## Cost notes
 
 - At hobby traffic the front end should cost ~$0 (CloudFront free allowance / flat-rate Free plan,
@@ -134,6 +147,8 @@ future ECS service and load balancer, show up as real numbers.
 
 - The back end's CORS `origins` list (`doozy/src/app/main.py`) must include the `site_url`.
 - The front end must be built with `VITE_API_BASE_URL` pointing at the API.
+- Set `api_origin` in `envs/prod/terraform.tfvars` to the same `https://` origin. The
+  Content-Security-Policy blocks the front end from calling any origin not listed there.
 - If the API is served through this same CloudFront distribution (e.g. `/api/*`), replace the
   403/404 → `index.html` error mapping in `modules/static_site/cloudfront.tf` with a
   CloudFront Function, so real API errors aren't rewritten.
