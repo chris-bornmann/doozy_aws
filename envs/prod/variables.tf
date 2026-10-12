@@ -32,3 +32,14 @@ variable "create_github_oidc_provider" {
   type        = bool
   default     = true
 }
+
+variable "api_origin" {
+  description = "Origin of the backend API the front end calls, e.g. \"https://api.example.com\" (scheme + host, no path). The Content-Security-Policy blocks calls to any other origin, so the front end can't reach the API until this is set."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = var.api_origin == "" || can(regex("^https://[^/]+$", var.api_origin))
+    error_message = "api_origin must be an https:// origin with no path, e.g. \"https://api.example.com\"."
+  }
+}

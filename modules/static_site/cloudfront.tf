@@ -1,11 +1,6 @@
-# AWS-managed policies: caching tuned for static files, and a standard set of
-# security headers (HSTS, X-Content-Type-Options, X-Frame-Options, etc.).
+# AWS-managed policy: caching tuned for static files.
 data "aws_cloudfront_cache_policy" "caching_optimized" {
   name = "Managed-CachingOptimized"
-}
-
-data "aws_cloudfront_response_headers_policy" "security_headers" {
-  name = "Managed-SecurityHeadersPolicy"
 }
 
 # Lets CloudFront sign its requests to the private bucket.
@@ -46,7 +41,7 @@ resource "aws_cloudfront_distribution" "site" {
     cached_methods             = ["GET", "HEAD"]
     compress                   = true
     cache_policy_id            = data.aws_cloudfront_cache_policy.caching_optimized.id
-    response_headers_policy_id = data.aws_cloudfront_response_headers_policy.security_headers.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.security.id
   }
 
   # The app uses client-side routing (react-router's BrowserRouter), so a
