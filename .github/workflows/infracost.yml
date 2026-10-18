@@ -46,7 +46,7 @@ jobs:
           path: base
           persist-credentials: false
 
-      - uses: infracost/actions/diff@fb736a8f219195d6efdca58682069b16fe1bc280 # v4.2.0
+      - uses: infracost/actions/diff@a5783eb98adc93aa7a0049fce0abb06fdd30770a # v5.0.1
         if: env.INFRACOST_API_KEY != ''
         with:
           api-key: ${{ env.INFRACOST_API_KEY }}
